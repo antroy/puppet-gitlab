@@ -116,24 +116,30 @@ class gitlab::install inherits ::gitlab {
     }
   }
 
-  package {'wget':
-    ensure => present,
+  if !$gitlab_package_name {
+      package {'wget':
+        ensure => present,
+      }
+      # Use wget to download gitlab
+      exec { 'download gitlab':
+        command => "/usr/bin/wget ${gitlab_url}",
+        path    => '/usr/bin:/usr/sbin:/bin:/usr/local/bin:/usr/local/sbin',
+        cwd     => "${download_location}",
+        creates => "${download_location}/${omnibus_filename}",
+        timeout => 1800,
+        require => Package['wget'],
+      }
+      # Install gitlab with the appropriate package manager (rpm or dpkg)
+      package { 'gitlab':
+        ensure   => installed,
+        source   => "${download_location}/${omnibus_filename}",
+        provider => "${package_manager}",
+        require  => Exec['download gitlab'],
+      }
   }
-  # Use wget to download gitlab
-  exec { 'download gitlab':
-    command => "/usr/bin/wget ${gitlab_url}",
-    path    => '/usr/bin:/usr/sbin:/bin:/usr/local/bin:/usr/local/sbin',
-    cwd     => "${download_location}",
-    creates => "${download_location}/${omnibus_filename}",
-    timeout => 1800,
-    require => Package['wget'],
+  else {
+      package { $gitlab_package_name:
+        ensure   => $gitlab_branch,
+      }
   }
-  # Install gitlab with the appropriate package manager (rpm or dpkg)
-  package { 'gitlab':
-    ensure   => installed,
-    source   => "${download_location}/${omnibus_filename}",
-    provider => "${package_manager}",
-    require  => Exec['download gitlab'],
-  }
-
 }

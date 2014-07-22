@@ -57,6 +57,7 @@ class gitlab (
   $gitlab_download_link    = $::gitlab::params::gitlab_download_link,
 
   $external_url   = $::gitlab::params::external_url,
+  $gitlab_package_name     = undef,
 
   #
   # 1. GitLab app settings
